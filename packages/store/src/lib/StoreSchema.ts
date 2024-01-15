@@ -10,33 +10,48 @@ import {
 	migrate,
 	migrateRecord,
 } from './legacy_migrate'
+import { MigrationId, MigrationSequence } from './migrate'
 
-/** @public */
-export interface SerializedSchema {
-	/** Schema version is the version for this type you're looking at right now */
-	schemaVersion: number
-	/**
-	 * Store version is the version for the structure of the store. e.g. higher level structure like
-	 * removing or renaming a record type.
-	 */
-	storeVersion: number
-	/** Record versions are the versions for each record type. e.g. adding a new field to a record */
-	recordVersions: Record<
-		string,
-		| {
-				version: number
-		  }
-		| {
-				// subtypes are used for migrating shape and asset props
-				version: number
-				subTypeVersions: Record<string, number>
-				subTypeKey: string
-		  }
-	>
-}
+const LEGACY_SCHEMA_VERSION = 1
+const CURRENT_SCHEMA_VERSION = 2
+
+/** @deprecated - Use MigrationRecord */
+export type SerializedSchema =
+	| {
+			/** Schema version is the version for this type you're looking at right now */
+			schemaVersion: typeof CURRENT_SCHEMA_VERSION
+			versionHistory: MigrationId[]
+	  }
+	| {
+			/** Schema version is the version for this type you're looking at right now */
+			schemaVersion: typeof LEGACY_SCHEMA_VERSION
+			/**
+			 * Store version is the version for the structure of the store. e.g. higher level structure like
+			 * removing or renaming a record type.
+			 */
+			storeVersion: number
+			/** Record versions are the versions for each record type. e.g. adding a new field to a record */
+			recordVersions: Record<
+				string,
+				| {
+						version: number
+				  }
+				| {
+						// subtypes are used for migrating shape and asset props
+						version: number
+						subTypeVersions: Record<string, number>
+						subTypeKey: string
+				  }
+			>
+	  }
 
 /** @public */
 export type StoreSchemaOptions<R extends UnknownRecord, P> = {
+	/**
+	 * @public
+	 * Any migrations for the store's data.
+	 */
+	migrations: MigrationSequence[]
 	/** @deprecated - use the new stuff */
 	snapshotMigrations?: Migrations
 	/** @public */
